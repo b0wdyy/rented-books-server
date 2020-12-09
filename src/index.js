@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const morgan = require("morgan");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 const mongoose = require("mongoose");
 const cloudinary = require("cloudinary").v2;
 const booksRouter = require("../router/booksRouter");
@@ -15,13 +18,15 @@ const main = async () => {
                 useUnifiedTopology: true,
                 useFindAndModify: false,
                 useCreateIndex: true,
-            },
+            }
         )
         .then(() => console.log("connection successful"));
 
     const app = express();
-    app.use(cors());
+
     app.use(express.urlencoded({ extended: true }));
+    app.use(cors());
+    app.use(morgan("dev"));
 
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -32,7 +37,7 @@ const main = async () => {
     app.use("/api/v1", booksRouter);
     app.use("/api/v1", userRouter);
 
-    const PORT = process.env.PORT | 4000;
+    const PORT = process.env.PORT || 4000;
 
     app.listen(PORT, () => {
         console.log(`server listening on http://localhost:${PORT}`);

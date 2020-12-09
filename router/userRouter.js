@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/user");
 const router = express.Router();
+const checkAuth = require("../middlewares/checkAuth");
 
 router.get("/users", async (_req, res) => {
     const users = await userModel.find();
@@ -11,9 +12,9 @@ router.get("/users", async (_req, res) => {
 
 router.post("/users/signup", async (req, res) => {
     req.body.password = bcrypt.hashSync(req.body.password, 10);
-    const userExists = await userModel.findOne({username: req.body.username});
+    const userExists = await userModel.findOne({ username: req.body.username });
     if (userExists) {
-        res.json({msg: "User already exists!"})
+        res.json({ msg: "User already exists!" });
         return;
     }
     const user = new userModel(req.body);
@@ -28,22 +29,36 @@ router.post("/users/signup", async (req, res) => {
 
 router.post("/users/login", async (req, res) => {
     try {
-        const user = await userModel.findOne({username: req.body.username}).exec();
+        const user = await userModel
+            .findOne({ username: req.body.username })
+            .exec();
 
         if (bcrypt.compareSync(req.body.password, user.password)) {
-           const token = jwt.sign({
-                username: user.username,
-                userId: user._id
-            }, process.env.JWT_KEY, {
-                expiresIn: "1h"
-            })
-            res.status(200).json({msg: "User successfully logged in.", token})
+            const token = jwt.sign(
+                {
+                    username: user.username,
+                    userId: user._id,
+                },
+                process.env.JWT_KEY,
+                {
+                    expiresIn: "1h",
+                }
+            );
+            res.status(200).json({
+                msg: "User successfully logged in.",
+                token,
+            });
         } else {
-            res.status(404).json({msg: "Password or username is wrong."})
+            res.status(404).json({ msg: "Password or username is wrong." });
         }
-    } catch(e) {
-        console.error(e)
+    } catch (e) {
+        console.error(e);
     }
-})
+});
+
+// TODO checkAuth hierbij toevoegen!
+router.post("/upload", (req, res) => {
+    console.log(req);
+});
 
 module.exports = router;
