@@ -5,12 +5,12 @@ const userModel = require("../models/user");
 const router = express.Router();
 const checkAuth = require("../middlewares/checkAuth");
 
-router.get("/users", async (_req, res) => {
+router.get("/", checkAuth, async (_req, res) => {
     const users = await userModel.find();
     res.json({ data: users });
 });
 
-router.post("/users/signup", async (req, res) => {
+router.post("/signup", async (req, res) => {
     req.body.password = bcrypt.hashSync(req.body.password, 10);
     const userExists = await userModel.findOne({ username: req.body.username });
     if (userExists) {
@@ -27,7 +27,7 @@ router.post("/users/signup", async (req, res) => {
     }
 });
 
-router.post("/users/login", async (req, res) => {
+router.post("/login", async (req, res) => {
     try {
         const user = await userModel
             .findOne({ username: req.body.username })
@@ -49,16 +49,13 @@ router.post("/users/login", async (req, res) => {
                 token,
             });
         } else {
-            res.status(404).json({ msg: "Password or username is wrong." });
+            return res
+                .status(404)
+                .json({ msg: "Password or username is wrong." });
         }
     } catch (e) {
         console.error(e);
     }
-});
-
-// TODO checkAuth hierbij toevoegen!
-router.post("/upload", (req, res) => {
-    console.log(req);
 });
 
 module.exports = router;

@@ -9,6 +9,10 @@ const bookSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    cover: {
+        type: String,
+        required: false,
+    },
     createdAt: {
         type: Date,
         default: Date.now(),
