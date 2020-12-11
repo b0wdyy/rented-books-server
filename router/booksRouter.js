@@ -4,6 +4,7 @@ const fs = require("fs");
 const multer = require("multer");
 const bookModel = require("../models/book");
 const checkAuth = require("../middlewares/checkAuth");
+const { saveBook, saveBookWithImage } = require("../utils/mongo");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -15,48 +16,51 @@ const storage = multer.diskStorage({
     },
 });
 
-router.get("/", checkAuth, async (_req, res) => {
+// TODO checkAuth nog toevoegen
+router.get("/", async (_req, res) => {
     const books = await bookModel.find();
     res.json({ data: books });
 });
 
-router.post("/", checkAuth, async (req, res) => {
+// TODO checkAuth nog toevoegen
+router.post("/", async (req, res) => {
     const upload = multer({ storage }).single("image");
 
     upload(req, res, err => {
         if (err) return res.json({ msg: err });
+        if (req.file) {
+            const file = req.file;
+            const path = file.path;
 
-        const file = req.file;
-        const path = file.path;
+            cloudinary.config({
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET,
+            });
 
-        cloudinary.config({
-            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-            api_key: process.env.CLOUDINARY_API_KEY,
-            api_secret: process.env.CLOUDINARY_API_SECRET,
-        });
+            cloudinary.uploader.upload(
+                path,
+                { public_id: `api/${file.filename.split(".")[0]}` },
+                async (err, image) => {
+                    if (err) return res.json({ msg: err });
+                    try {
+                        console.log(`${image.url} uploaded to cloudinary`);
+                        fs.unlinkSync(path);
 
-        cloudinary.uploader.upload(path, {public_id: `api/${file.filename.split(".")[0]}`}, async (err, image) => {
-            if (err) return res.json({msg: err});
+                        saveBookWithImage(req, res, image);
+                    } catch (e) {
+                        res.json(e);
+                    }
+                }
+            );
+        } else {
             try {
-                console.log(`${image.url} uploaded to cloudinary`);
-                fs.unlinkSync(path);
-
-                const book = new bookModel({
-                    title: req.body.title,
-                    description: req.body.description,
-                    cover: image.url
-                });
-
-                await book.save();
-
-                res.status(201).json({ msg: "Book successfully created." });
+                saveBook(req, res);
             } catch (e) {
                 res.json(e);
             }
-        })
+        }
     });
-
-
 });
 
 router.get("/:id", checkAuth, async (req, res) => {
