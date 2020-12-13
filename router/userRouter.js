@@ -44,9 +44,17 @@ router.post("/login", async (req, res) => {
                     expiresIn: "1h",
                 }
             );
+            const {_id, username, name, lastName, createdAt} = user;
             res.status(200).json({
                 msg: "User successfully logged in.",
                 token,
+                user: {
+                    _id,
+                    username,
+                    name,
+                    lastName,
+                    createdAt
+                }
             });
         } else {
             return res
