@@ -13,6 +13,10 @@ const bookSchema = mongoose.Schema({
         type: String,
         required: false,
     },
+    user_id: {
+        type: String,
+        required: true,
+    },
     createdAt: {
         type: Date,
         default: Date.now(),

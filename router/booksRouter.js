@@ -17,8 +17,8 @@ const storage = multer.diskStorage({
 });
 
 // TODO checkAuth nog toevoegen
-router.get("/", async (_req, res) => {
-    const books = await bookModel.find();
+router.get("/", async (req, res) => {
+    const books = await bookModel.find({user_id: req.query.user_id});
     res.json({ data: books });
 });
 
@@ -47,7 +47,7 @@ router.post("/", async (req, res) => {
                         console.log(`${image.url} uploaded to cloudinary`);
                         fs.unlinkSync(path);
 
-                        saveBookWithImage(req, res, image);
+                        await saveBookWithImage(req.body, res, image);
                     } catch (e) {
                         res.json(e);
                     }
@@ -55,7 +55,7 @@ router.post("/", async (req, res) => {
             );
         } else {
             try {
-                saveBook(req, res);
+                saveBook(req.body, res);
             } catch (e) {
                 res.json(e);
             }
